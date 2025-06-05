@@ -1,39 +1,42 @@
-#!/usr/bin/env python3
-import os
-from ament_index_python.packages import get_package_share_directory
-from launch import LaunchDescription
+from os.path import join
+ 
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
+ 
+from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-
-def generate_launch_description():
-  # RViZ2 settings
-  rviz2_config = os.path.join(
-      get_package_share_directory('ldlidar_stl_ros2'),
-      'rviz2',
-      'ldlidar.rviz'
-  )
-
-  rviz2_node = Node(
-      package='rviz2',
-      executable='rviz2',
-      name='rviz2_show_ld19',
-      arguments=['-d',rviz2_config],
-      output='screen'
-  )
-
-  #Include LDLidar launch file
-  ldlidar_launch = IncludeLaunchDescription(
-      launch_description_source=PythonLaunchDescriptionSource([
-          get_package_share_directory('ldlidar_stl_ros2'),
-          '/launch/ld19.launch.py'
-      ])
-  )
-
-  # Define LaunchDescription variable
-  ld = LaunchDescription()
-
-  ld.add_action(ldlidar_launch)
-  ld.add_action(rviz2_node)
-
-  return ld
+ 
+# CONSTANTS
+PACKAGE_NAME = "ldlidar_stl_ros2"
+ 
+ 
+def generate_launch_description() -> LaunchDescription:
+    """
+    Launch file to start the LiDAR node with RViz2.
+ 
+    Returns
+    -------
+    LaunchDescription
+        The launch description.
+ 
+    """
+ 
+    # Get the package share directory
+    pkg_share = FindPackageShare(package=PACKAGE_NAME).find(PACKAGE_NAME)
+ 
+    rviz2_config = join(pkg_share, "rviz2", "ldlidar.rviz")
+ 
+    rviz2_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2_show_ld19",
+        arguments=["-d", rviz2_config],
+        output="screen",
+    )
+ 
+    lidar_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([pkg_share, "/launch/ld19.launch.py"])
+    )
+ 
+    return LaunchDescription([lidar_launch, rviz2_node])
